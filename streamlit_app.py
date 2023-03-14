@@ -14,7 +14,9 @@ st.set_page_config(
 
 # TO DO : si un seul visage détecté : pas besoin de sélectionner
 # symétrie à choisir
-# forme du 
+# forme du cadre (rond)
+# recadrage de la photo avant
+# sélection d'un autre visage non détecté
 
 start_timer = start_timer()
 
