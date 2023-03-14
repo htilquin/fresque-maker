@@ -7,13 +7,14 @@ st.set_page_config(
     layout='centered', 
     initial_sidebar_state='auto', 
     menu_items={'About': """### Fresque Maker 
-    \nThis app has been created to help you make a fresque out of any picture.
+    \nThis app has been created to help you make a wonderful fresque out of any picture.
     \n ---
-    \n Face detection : HOG based detector from Dlib.
-    \n --Shape predictor : 68 face landmarks (Dlib).
-    \n --Face recognition model : resnet model v1 (Dlib).
-    \n --Gender classification : Multi-Layer Perceptron."""}
+    \n Face detection : HOG based detector from Dlib."""}
 )
+
+# TO DO : si un seul visage détecté : pas besoin de sélectionner
+# symétrie à choisir
+# forme du 
 
 start_timer = start_timer()
 
