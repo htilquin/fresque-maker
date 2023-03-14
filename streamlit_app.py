@@ -3,7 +3,7 @@ from utils_app import *
 
 st.set_page_config(
     page_title="Fresque Maker", 
-    page_icon="😃", 
+    page_icon="🖼️", 
     layout='centered', 
     initial_sidebar_state='auto', 
     menu_items={'About': """### Fresque Maker 
