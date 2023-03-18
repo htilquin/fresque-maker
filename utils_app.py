@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import streamlit as st
 import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
 
 from time import time
 
@@ -36,7 +37,8 @@ def read_image_from_streamlit_cv2(streamlit_image):
     image = cv2.imdecode(np.frombuffer(streamlit_image.read(), np.uint8), 1)
     return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-def grid_display_and_motif(images, columns):
+
+def choose_faces(images, columns):
     image_number = 0
     chosen_ones = []
     for _ in range(int(len(images)/columns)+1) :
@@ -47,57 +49,85 @@ def grid_display_and_motif(images, columns):
             else :
                 with cols[column]:
                     st.image(images[image_number], use_column_width=True)
-                    chosen = st.checkbox(f"{image_number}")
+                    chosen = st.checkbox(f"{image_number}", value=True)
                     if chosen :
                         chosen_ones.append(image_number)
                     image_number += 1
     
-    if len(chosen_ones) == 0:
-        st.write('Pick at least one picture !')
+    return chosen_ones
 
-    else:
-        height, width, _ = images[0].shape
-        dimensions = (width, height)
 
-        images_tuple = tuple(
+def motif_maker(images, chosen_ones, symetry):
+    height, width, _ = images[0].shape
+    dimensions = (width, height)
+
+    images_frieze = tuple(
+        (
+            cv2.resize(images[i], dimensions, interpolation=cv2.INTER_LINEAR)
+            for i in chosen_ones
+        )
+    )
+
+    if symetry:
+        images_frieze_flipped = tuple(
             (
-                cv2.resize(images[i], dimensions, interpolation=cv2.INTER_LINEAR)
-                for i in chosen_ones
+                cv2.flip(cv2.resize(images[i], dimensions, interpolation=cv2.INTER_LINEAR), 1)
+                for i in chosen_ones#[::-1]
             )
         )
 
-        return images_tuple
+        images_frieze = images_frieze + images_frieze_flipped
+
+    return images_frieze
     
-def make_fresque(image, images_tuple, a):
-    motif_h = np.concatenate(images_tuple*a, axis=1)
-    motif_b = np.concatenate(images_tuple[::-1]*a, axis=1)
+def add_frame(image, images_frieze, repetition):
+    motif_top = np.concatenate(images_frieze*repetition, axis=1)
+    motif_b = np.concatenate(images_frieze[::-1]*repetition, axis=1)
 
     height_original, width_original, _ = image.shape
-    height_motif_h, width_motif_h, _ = motif_h.shape
-    ratio_motif_h = width_motif_h / height_motif_h
-    dimensions = (width_original, round(width_original/ratio_motif_h) )
-    frise_h = cv2.resize(motif_h, dimensions, interpolation=cv2.INTER_LINEAR)
+    height_motif_top, width_motif_top, _ = motif_top.shape
+    ratio_motif_top = width_motif_top / height_motif_top
+    
+    dimensions = (width_original, round(width_original/ratio_motif_top) )
+    frise_top = cv2.resize(motif_top, dimensions, interpolation=cv2.INTER_LINEAR)
     frise_b = cv2.resize(motif_b, dimensions, interpolation=cv2.INTER_LINEAR)
 
-    fresque_haut_bas = np.concatenate((frise_h, image, frise_b), axis=0)
+    fresque_top_bottom = np.concatenate((frise_top, image, frise_b), axis=0)
 
-    height_fresque_hb, width_fresque_hb, _ = fresque_haut_bas.shape
-    height_frise_h, width_frise_h, _ = frise_h.shape
+    height_fresque_tb, width_fresque_tb, _ = fresque_top_bottom.shape
+    height_frise_top, width_frise_top, _ = frise_top.shape
 
-    nb_motif_v = round((height_fresque_hb / height_frise_h)/len(images_tuple))
+    nb_motif_v = round((height_fresque_tb / height_frise_top)/len(images_frieze))
 
-    motif_g = np.concatenate(images_tuple[::-1]*nb_motif_v, axis=0)
-    motif_d = np.concatenate(images_tuple*nb_motif_v, axis=0)
-    height_motif_v, width_motif_v, _ = motif_g.shape
+    motif_left = np.concatenate(images_frieze[::-1]*nb_motif_v, axis=0)
+    motif_right = np.concatenate(images_frieze*nb_motif_v, axis=0)
+
+    height_motif_v, width_motif_v, _ = motif_left.shape
     ratio_motif_v = width_motif_v / height_motif_v
 
-    dimensions = (round(height_fresque_hb*ratio_motif_v), height_fresque_hb )
-    frise_g = cv2.resize(motif_g, dimensions, interpolation=cv2.INTER_LINEAR)
-    frise_d = cv2.resize(motif_d, dimensions, interpolation=cv2.INTER_LINEAR)
+    dimensions = (round(height_fresque_tb*ratio_motif_v), height_fresque_tb )
+    frise_left = cv2.resize(motif_left, dimensions, interpolation=cv2.INTER_LINEAR)
+    frise_right = cv2.resize(motif_right, dimensions, interpolation=cv2.INTER_LINEAR)
 
-    fresque_totale = np.concatenate((frise_g, fresque_haut_bas, frise_d), axis=1)
+    fresque_totale = np.concatenate((frise_left, fresque_top_bottom, frise_right), axis=1)
     return fresque_totale
 
+
+def add_frame_round(image, repetition):
+    height, width, _ = image.shape
+    mini_dimension = min(height, width)
+    image_square = image[0:mini_dimension, 0:mini_dimension]
+    lum_img = Image.new('L', [mini_dimension, mini_dimension], 0)
+
+    draw = ImageDraw.Draw(lum_img)
+    draw.pieslice([(0,0), (mini_dimension, mini_dimension)], 0, 360,
+                    fill = 255, outline = "white")
+    
+    img_arr = np.array(image_square)
+    lum_img_arr = np.array(lum_img)
+    final_img_arr = np.dstack((img_arr, lum_img_arr))
+
+    return final_img_arr
 
 
 
