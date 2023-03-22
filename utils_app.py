@@ -151,7 +151,7 @@ def add_frame_round(image, images_frieze, repetition):
     image_square, square_dim = image_to_square(image)
 
     mini_h, mini_w, _ = images_frieze[0].shape
-    big_dim = square_dim + mini_h * 2
+    big_dim = square_dim + mini_h
 
     background = Image.new("RGB", (big_dim, big_dim), "white")
 
