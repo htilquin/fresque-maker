@@ -194,14 +194,6 @@ def add_frame_round(image, images_frieze, repetition):
         )
         background.paste(img, coordinates_modif, img)
 
-    text = ImageDraw.Draw(background)
-    text.text(
-        center,
-        text="x",
-        fill="red",
-        anchor="mm",
-    )
-
     lum_img = Image.new("L", [big_dim, big_dim], 0)
 
     draw = ImageDraw.Draw(lum_img)
